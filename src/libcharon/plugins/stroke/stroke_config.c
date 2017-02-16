@@ -784,6 +784,24 @@ static peer_cfg_t *build_peer_cfg(private_stroke_config_t *this,
 		msg->add_conn.dpd.noreply, msg->add_conn.skip_check_id,
 		msg->add_conn.skip_check_cert, msg->add_conn.server_nocert);
 
+	/*
+	*set liveness_check configuration
+	*/
+	if(msg->add_conn.liveness_check)
+	{
+		peer_cfg->set_liveness_check(peer_cfg, msg->add_conn.liveness_check);
+		DBG1(DBG_CFG, "set_liveness_check %d", msg->add_conn.liveness_check);
+	}
+
+	/*
+	check whether enable CERTREQ request payload critical bit
+	*/
+	if(msg->add_conn.certreq_critical)
+	{
+		peer_cfg->enable_certreq_critical_bit(peer_cfg);
+		DBG1(DBG_CFG, "enable CERTREQ request payload critical bit");
+	}
+
 	if (msg->add_conn.other.sourceip)
 	{
 		enumerator_t *enumerator;

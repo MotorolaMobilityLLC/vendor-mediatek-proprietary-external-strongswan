@@ -193,8 +193,10 @@ int starter_stroke_add_conn(starter_config_t *cfg, starter_conn_t *conn)
 	msg.add_conn.rekey.tries = conn->sa_keying_tries;
 
 	msg.add_conn.mobike = conn->options & SA_OPTION_MOBIKE;
+	msg.add_conn.liveness_check = conn->options & SA_OPTION_LIVENESS_CHECK;
 	msg.add_conn.force_encap = conn->options & SA_OPTION_FORCE_ENCAP;
 	msg.add_conn.fragmentation = conn->fragmentation;
+	msg.add_conn.certreq_critical = conn->certreq_critical;
 	msg.add_conn.ikedscp = conn->ikedscp;
 	msg.add_conn.ipcomp = conn->options & SA_OPTION_COMPRESS;
 	msg.add_conn.install_policy = conn->install_policy;

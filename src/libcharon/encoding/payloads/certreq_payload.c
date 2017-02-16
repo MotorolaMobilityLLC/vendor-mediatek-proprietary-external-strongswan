@@ -155,6 +155,13 @@ METHOD(payload_t, set_next_type, void,
 	this->next_payload = type;
 }
 
+METHOD(payload_t, enable_critical_bit, void,
+	private_certreq_payload_t *this, payload_type_t type)
+{
+	this->critical = TRUE;
+}
+
+
 METHOD(payload_t, get_length, size_t,
 	private_certreq_payload_t *this)
 {
@@ -267,6 +274,7 @@ certreq_payload_t *certreq_payload_create(payload_type_t type)
 				.get_length = _get_length,
 				.get_next_type = _get_next_type,
 				.set_next_type = _set_next_type,
+				.enable_critical_bit = _enable_critical_bit,
 				.get_type = _get_type,
 				.destroy = _destroy,
 			},

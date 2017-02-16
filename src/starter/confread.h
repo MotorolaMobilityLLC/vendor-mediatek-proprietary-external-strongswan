@@ -87,6 +87,7 @@ typedef enum {
 		SA_OPTION_XAUTH_SERVER  = 1 << 5, /* are we an XAUTH server? */
 		SA_OPTION_MOBIKE		= 1 << 6, /* enable MOBIKE for IKEv2  */
 		SA_OPTION_FORCE_ENCAP   = 1 << 7, /* force UDP encapsulation */
+		SA_OPTION_LIVENESS_CHECK = 1 <<8, /*3gpp 24.302 8.2.4 liveness check feature*/
 } sa_option_t;
 
 typedef struct starter_end starter_end_t;
@@ -160,6 +161,7 @@ struct starter_conn {
 		ipsec_mode_t    mode;
 		bool            proxy_mode;
 		fragmentation_t fragmentation;
+		bool            certreq_critical;
 		u_int           ikedscp;
 		sa_option_t     options;
 		time_t          sa_ike_life_seconds;

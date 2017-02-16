@@ -27,8 +27,9 @@
 #include <threading/mutex.h>
 #include <pthread.h>
 //#include <signal.h>
- 
+
 #define	CAP_WAKE_ALARM 35
+#define	MAX_TS_EVENT 16
 
 /* the initial size of the heap */
 #define HEAP_SIZE_DEFAULT 64
@@ -69,7 +70,7 @@ struct private_scheduler_t {
 	/**
 	 * Public part of a scheduler_t object.
 	 */
-	 scheduler_t public;
+	scheduler_t public;
 
 	/**
 	 * The heap in which the events are stored.
@@ -98,6 +99,9 @@ struct private_scheduler_t {
 
 	bool cap_alarm;
 	struct timespec ts;
+	mutex_t *mutexTS;
+	event_t *eventTS;
+	event_t *eventQueue[MAX_TS_EVENT];
 };
 
 /**
@@ -185,16 +189,36 @@ static event_t *remove_event(private_scheduler_t *this)
 void *alarmsleep(private_scheduler_t * this)
 {
 	struct timespec tsa;
+	struct timespec tsr;
 	int result;
+	event_t *eventTS;
+	int i, queueindex;
 
 	tsa.tv_sec = 0;
 	tsa.tv_nsec = 0;
 
-//	DBG1(DBG_JOB, "alarmsleep1 %d s %d ns", this->ts.tv_sec, this->ts.tv_nsec);
-	result = clock_nanosleep(CLOCK_REALTIME_ALARM, 0, &(this->ts), &tsa);
-//	DBG1(DBG_JOB, "alarmsleep2 %ds %dns, result: %d",  tsa.tv_sec, tsa.tv_nsec, result);
+	memcpy(&tsr, &this->ts, sizeof(struct timespec));
+	eventTS = this->eventTS;
+	this->mutex->unlock(this->mutexTS);
+
+	DBG2(DBG_JOB, "tid: %X, alarmsleep1 %d s %d ns", pthread_self(), tsr.tv_sec, tsr.tv_nsec);
+
+	result = clock_nanosleep(CLOCK_REALTIME_ALARM, 0, &tsr, &tsa);
+
+	this->mutex->lock(this->mutexTS);
+	for (queueindex = 0; queueindex < MAX_TS_EVENT; queueindex++)  {
+		if (this->eventQueue[queueindex] == eventTS) {
+			this->eventQueue[queueindex] = 0;
+			break;
+		}
+	}
+	this->mutex->unlock(this->mutexTS);
+
+	DBG2(DBG_JOB, "tid: %X, alarmsleep2 %ds %d ns, result: %d, queueindex: %d",  pthread_self(), tsa.tv_sec, tsa.tv_nsec, result, queueindex);
+
 	this->condvar->broadcast(this->condvar);
 	pthread_detach(pthread_self()) ;
+
 	return NULL;
 }
 
@@ -239,25 +263,55 @@ static job_requeue_t schedule(private_scheduler_t * this)
 
 	if (timed)
 	{
-		if (this->cap_alarm) 
+		if (this->cap_alarm)
 		{
 			int result_thread;
-			int result_wait;
+			int result_wait = 0;
 			pthread_t alarm_thread;
-//		DBG1(DBG_JOB, "waiting1 %ds %dms", now.tv_sec, now.tv_usec/1000);
+			int queueindex, i;
 
-			this->ts.tv_sec = now.tv_sec;
-			this->ts.tv_nsec = now.tv_usec*1000;
+			this->mutex->lock(this->mutexTS);
+			for (i = 0; i < MAX_TS_EVENT; i++)
+			{
+				DBG3(DBG_JOB, "\t\t\t, this->eventQueue[%d]: %X, event: %X", i, this->eventQueue[i], event);
+				if (this->eventQueue[i] == event) {
+					break;
+				}
+			}
 
-			result_thread = pthread_create(&alarm_thread, NULL, alarmsleep, this);
-			if (result_thread < 0) {
-				DBG1(DBG_JOB, "Can't create the thread for waiting1 %ds %dms", now.tv_sec, now.tv_usec/1000);
+			if (i >= MAX_TS_EVENT)
+			{
+				for (queueindex = 0; queueindex < MAX_TS_EVENT; queueindex++)
+				{
+					if (this->eventQueue[queueindex] == 0) {
+						DBG2(DBG_JOB, "\t, waiting1 %ds %dms, event: %X, queueindex : %d", now.tv_sec, now.tv_usec/1000, event, queueindex);
+						this->eventQueue[queueindex] = event;
+
+						this->ts.tv_sec = now.tv_sec;
+						this->ts.tv_nsec = now.tv_usec*1000;
+						this->eventTS = event;
+						result_thread = pthread_create(&alarm_thread, NULL, alarmsleep, this);
+						if (result_thread < 0) {
+							DBG1(DBG_JOB, "Can't create the thread for waiting1 %ds %dms", now.tv_sec, now.tv_usec/1000);
+							this->mutex->unlock(this->mutexTS);
+						}
+						DBG3(DBG_JOB, "\t, child_id: %X,%ds %dms ", alarm_thread, now.tv_sec, now.tv_usec/1000);
+						break;
+					}
+				}
+				if (queueindex >= MAX_TS_EVENT) {
+					this->mutex->unlock(this->mutexTS);
+				}
+			} else {
+				this->mutex->unlock(this->mutexTS);
 			}
 			result_wait = this->condvar->timed_wait_abs(this->condvar, this->mutex, event->time);
-//		DBG1(DBG_JOB, "waiting2 result_thread: %d, result_wait: %d, thread_id: %X",  result_thread, result_wait, alarm_thread);
+			DBG2(DBG_JOB, "\t,waiting2 , result_wait: %d, thread_id: %X,%ds %dms",  result_wait, alarm_thread, now.tv_sec, now.tv_usec/1000);
 		} else {
-		this->condvar->timed_wait_abs(this->condvar, this->mutex, event->time);
-	}
+			DBG3(DBG_JOB, "\t,waitingA: %d s %d ms",  now.tv_sec, now.tv_usec );
+			this->condvar->timed_wait_abs(this->condvar, this->mutex, event->time);
+			DBG3(DBG_JOB, "\t,waitingB");
+		}
 	}
 	else
 	{
@@ -348,6 +402,7 @@ METHOD(scheduler_t, destroy, void,
 	event_t *event;
 	this->condvar->destroy(this->condvar);
 	this->mutex->destroy(this->mutex);
+	this->mutexTS->destroy(this->mutexTS);
 	while ((event = remove_event(this)) != NULL)
 	{
 		event_destroy(event);
@@ -387,6 +442,7 @@ scheduler_t * scheduler_create()
 		.mutex = mutex_create(MUTEX_TYPE_DEFAULT),
 		.condvar = condvar_create(CONDVAR_TYPE_DEFAULT),
 		.cap_alarm = bWake,
+		.mutexTS = mutex_create(MUTEX_TYPE_DEFAULT),
 	);
 
 	this->heap = (event_t**)calloc(this->heap_size + 1, sizeof(event_t*));
@@ -394,6 +450,7 @@ scheduler_t * scheduler_create()
 	job = callback_job_create_with_prio((callback_job_cb_t)schedule, this,
 										NULL, return_false, JOB_PRIO_CRITICAL);
 	lib->processor->queue_job(lib->processor, (job_t*)job);
+	memset(this->eventQueue, 0, sizeof(this->eventQueue));
 
 	return &this->public;
 }

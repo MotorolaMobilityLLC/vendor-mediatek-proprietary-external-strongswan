@@ -121,6 +121,7 @@ static void default_values(starter_config_t *cfg)
 	cfg->conn_default.state   = STATE_IGNORE;
 	cfg->conn_default.mode    = MODE_TUNNEL;
 	cfg->conn_default.options = SA_OPTION_MOBIKE;
+	cfg->conn_default.certreq_critical = FALSE;
 
 	cfg->conn_default.ike                   = strdupnull(ike_defaults);
 	cfg->conn_default.esp                   = strdupnull(esp_defaults);
@@ -451,7 +452,14 @@ static void load_conn(starter_conn_t *conn, kw_list_t *kw, starter_config_t *cfg
 
 		if (assigned)
 			continue;
-
+		
+		if ((token == KW_ESP && conn->ah) || (token == KW_AH && conn->esp))
+		{
+			DBG1(DBG_APP, "# can't have both 'ah' and 'esp' options");
+			cfg->err++;
+			return;
+		}
+		
 		switch (token)
 		{
 		case KW_TYPE:
@@ -544,6 +552,20 @@ static void load_conn(starter_conn_t *conn, kw_list_t *kw, starter_config_t *cfg
 				}
 			}
 			break;
+		case KW_CERTREQ_CRITICAL:
+			if(streq(kw->value, "yes"))
+			{
+				conn->certreq_critical = TRUE;
+			}
+			else if(streq(kw->value, "no"))
+			{
+				conn->certreq_critical = FALSE;
+			}
+			else
+			{
+				DBG1(DBG_APP,"invalid KW_CERTREQ_CRITICAL value");
+			}
+			break;
 		case KW_REKEY:
 			KW_SA_OPTION_FLAG("no", "yes", SA_OPTION_DONT_REKEY)
 			break;
@@ -552,6 +574,9 @@ static void load_conn(starter_conn_t *conn, kw_list_t *kw, starter_config_t *cfg
 			break;
 		case KW_MOBIKE:
 			KW_SA_OPTION_FLAG("yes", "no", SA_OPTION_MOBIKE)
+			break;
+		case KW_LIVENESS_CHECK:
+			KW_SA_OPTION_FLAG("yes", "no", SA_OPTION_LIVENESS_CHECK)
 			break;
 		case KW_FORCEENCAPS:
 			KW_SA_OPTION_FLAG("yes", "no", SA_OPTION_FORCE_ENCAP)

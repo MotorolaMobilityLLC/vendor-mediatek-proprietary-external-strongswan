@@ -145,7 +145,9 @@ static const token_info_t token_info[] =
 	{ ARG_STR,  offsetof(starter_conn_t, aaa_identity), NULL                       },
 	{ ARG_MISC, 0, NULL  /* KW_MOBIKE */                                           },
 	{ ARG_MISC, 0, NULL  /* KW_FORCEENCAPS */                                      },
+	{ ARG_MISC, 0, NULL  /* KW_LIVENESS_CHECK */                                      },
 	{ ARG_ENUM, offsetof(starter_conn_t, fragmentation), LST_fragmentation         },
+	{ ARG_ENUM, offsetof(starter_conn_t, certreq_critical), LST_bool                 },
 	{ ARG_UBIN, offsetof(starter_conn_t, ikedscp), NULL                            },
 	{ ARG_TIME, offsetof(starter_conn_t, sa_ike_life_seconds), NULL                },
 	{ ARG_TIME, offsetof(starter_conn_t, sa_ipsec_life_seconds), NULL              },
@@ -315,11 +317,15 @@ bool assign_arg(kw_token_t token, kw_token_t first, kw_list_t *kw, char *base,
 
 	int index = -1;  /* used for enumeration arguments */
 
-	seen_t *seen = (seen_t*)base; /* seen flags are at the top of the struct */
-
 	*assigned = FALSE;
 
 	DBG3(DBG_APP, "  %s=%s", kw->entry->name, kw->value);
+
+	/*disable duplicate option check,align 5.5.* strongswan*/
+#if 0	
+	seen_t *seen = (seen_t*)base; /* seen flags are at the top of the struct */
+
+	DBG1(DBG_APP,"seen : %llu,token - first : %u",*seen,token-first);
 
 	if (*seen & SEEN_KW(token, first))
 	{
@@ -338,6 +344,7 @@ bool assign_arg(kw_token_t token, kw_token_t first, kw_list_t *kw, char *base,
 
 	/* set flag that this argument has been seen */
 	*seen |= SEEN_KW(token, first);
+#endif
 
 	/* is there a keyword list? */
 	if (list != NULL && token_info[token].type != ARG_LST)

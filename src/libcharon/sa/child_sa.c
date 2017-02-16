@@ -699,7 +699,13 @@ METHOD(child_sa_t, install, status_t,
 	if (lifetime->time.life)
 	{
 		this->expire_time = now + lifetime->time.life;
+		DBG2(DBG_IKE, "lifetime->time.life: %lu, jitter: %lu, rekey: %lu", lifetime->time.life, lifetime->time.jitter, lifetime->time.rekey);
+		if ((lifetime->time.jitter > 0) && (lifetime->time.jitter < lifetime->time.life))
+		{
+			this->expire_time = this->rekey_time + lifetime->time.jitter;
+		}
 	}
+	DBG1(DBG_IKE, "rekey_time: %u, expire_time: %u", this->rekey_time-now, this->expire_time-now);
 
 	if (!lifetime->time.jitter && !inbound)
 	{	/* avoid triggering multiple rekey events */

@@ -448,6 +448,20 @@ static void build_certreqs(private_ike_cert_pre_t *this, message_t *message)
 		enumerator->destroy(enumerator);
 	}
 
+	/* enable CERTREQ payload critical bit*/
+	if(peer_cfg)
+	{
+		if(peer_cfg->get_certreq_critical(peer_cfg))
+		{
+			if(req)
+			{
+				req->payload_interface.enable_critical_bit(req);
+			}
+			DBG1(DBG_IKE,"enable CERTREQ payload critical bit");
+
+		}
+	}
+
 	if (req)
 	{
 		message->add_payload(message, (payload_t*)req);

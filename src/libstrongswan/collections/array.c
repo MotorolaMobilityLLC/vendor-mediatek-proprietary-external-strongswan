@@ -141,7 +141,7 @@ static void remove_tail(array_t *array, int idx)
 	/* move all items after idx one down */
 	memmove(array->data + get_size(array, idx + array->head),
 			array->data + get_size(array, idx + array->head + 1),
-			get_size(array, array->count - idx));
+			get_size(array, array->count - 1 - idx));
 	array->count--;
 	array->tail++;
 }
@@ -168,7 +168,7 @@ array_t *array_create(u_int esize, u_int8_t reserve)
 	);
 	if (array->tail)
 	{
-		array->data = malloc(array->tail * array->esize);
+		array->data = malloc(get_size(array, array->tail));
 	}
 	return array;
 }
@@ -361,16 +361,16 @@ bool array_remove(array_t *array, int idx, void *data)
 	{
 		return FALSE;
 	}
+	if (idx < 0)
+	{
+		idx = array_count(array) - 1;
+	}
 	if (idx > array_count(array) / 2)
 	{
 		remove_tail(array, idx);
 	}
 	else
 	{
-		if (idx < 0)
-		{
-			idx = array_count(array) - 1;
-		}
 		remove_head(array, idx);
 	}
 	if (array->head + array->tail > ARRAY_MAX_UNUSED)

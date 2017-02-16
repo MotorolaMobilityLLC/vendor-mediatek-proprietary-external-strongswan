@@ -375,6 +375,12 @@ struct payload_t {
 	void (*set_next_type) (payload_t *this,payload_type_t type);
 
 	/**
+	*enable critical bit 
+	*/
+	void (*enable_critical_bit) (payload_t *this);
+
+
+	/**
 	 * Get length of payload.
 	 *
 	 * @return				length of this payload

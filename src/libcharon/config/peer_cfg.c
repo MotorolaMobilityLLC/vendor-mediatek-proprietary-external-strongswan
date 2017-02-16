@@ -96,6 +96,16 @@ struct private_peer_cfg_t {
 	bool use_mobike;
 
 	/**
+	 * enable support for liveness check feature 
+	 */
+	bool liveness_check;
+
+	/**
+	 * Time for liveness check feature 
+	 */
+	u_int32_t liveness_check_timeout;
+
+	/**
 	 * Use aggressive mode?
 	 */
 	bool aggressive;
@@ -158,6 +168,7 @@ struct private_peer_cfg_t {
 	u_int32_t retrans_time;
 	u_int16_t retrans_tries;
 	u_int16_t retrans_base;
+	bool certreq_critical;
 	bool no_init_contact;
 	bool no_eap_only;
 	bool hashandurl;
@@ -419,6 +430,29 @@ METHOD(peer_cfg_t, use_mobike, bool,
 	return this->use_mobike;
 }
 
+METHOD(peer_cfg_t, get_liveness_check, bool,
+	private_peer_cfg_t *this)
+{
+	return this->liveness_check;
+}
+
+METHOD(peer_cfg_t, get_liveness_check_timeout, u_int32_t,
+	private_peer_cfg_t *this)
+{
+	return this->liveness_check_timeout;
+}
+
+METHOD(peer_cfg_t, set_liveness_check, void, private_peer_cfg_t *this, bool liveness_check)
+{
+	this->liveness_check = liveness_check;
+}
+
+METHOD(peer_cfg_t, set_liveness_check_timeout, void, private_peer_cfg_t *this, u_int32_t liveness_check_timeout)
+{
+	this->liveness_check_timeout = liveness_check_timeout;
+	DBG1(DBG_IKE,"set_liveness_check_timeout: %u",liveness_check_timeout);
+}
+
 METHOD(peer_cfg_t, use_aggressive, bool,
 	private_peer_cfg_t *this)
 {
@@ -435,6 +469,12 @@ METHOD(peer_cfg_t, get_dpd, u_int32_t,
 	private_peer_cfg_t *this)
 {
 	return this->dpd;
+}
+
+METHOD(peer_cfg_t, set_dpd, void, private_peer_cfg_t *this, u_int32_t dpd_timeout)
+{
+	this->dpd = dpd_timeout;
+	DBG1(DBG_IKE,"set_dpd: %u",dpd_timeout);
 }
 
 METHOD(peer_cfg_t, get_dpd_timeout, u_int32_t,
@@ -768,7 +808,7 @@ METHOD(peer_cfg_t, get_vif, char*,
 METHOD(peer_cfg_t, get_cust_cp_pcscf4, u_int16_t,
 	private_peer_cfg_t *this)
 {
-    return this->cust_cp_pcscf4;
+	return this->cust_cp_pcscf4;
 }
 
 METHOD(peer_cfg_t, get_cust_cp_pcscf6, u_int16_t,
@@ -800,6 +840,13 @@ METHOD(peer_cfg_t, get_keepalive_time, u_int32_t,
 {
 	return this->keepalive_time;
 }
+
+METHOD(peer_cfg_t, get_certreq_critical, bool,
+	private_peer_cfg_t *this)
+{
+	return this->certreq_critical;
+}
+
 
 METHOD(peer_cfg_t, get_oos_time, u_int32_t,
 	private_peer_cfg_t *this)
@@ -836,6 +883,13 @@ METHOD(peer_cfg_t, send_eap_only, bool,
 {
 	return !this->no_eap_only;
 }
+
+METHOD(peer_cfg_t, enable_certreq_critical_bit, void,
+	private_peer_cfg_t *this)
+{
+	this->certreq_critical = TRUE;
+}
+
 
 METHOD(peer_cfg_t, use_hashandurl, bool,
 	private_peer_cfg_t *this)
@@ -925,9 +979,14 @@ peer_cfg_t *peer_cfg_create(char *name,
 			.get_reauth_time = _get_reauth_time,
 			.get_over_time = _get_over_time,
 			.use_mobike = _use_mobike,
+			.get_liveness_check = _get_liveness_check,
+			.get_liveness_check_timeout = _get_liveness_check_timeout,
+			.set_liveness_check = _set_liveness_check,
+			.set_liveness_check_timeout = _set_liveness_check_timeout,
 			.use_aggressive = _use_aggressive,
 			.use_pull_mode = _use_pull_mode,
 			.get_dpd = _get_dpd,
+			.set_dpd = _set_dpd,
 			.get_dpd_timeout = _get_dpd_timeout,
 			.add_virtual_ip = _add_virtual_ip,
 			.create_virtual_ip_enumerator = _create_virtual_ip_enumerator,
@@ -945,6 +1004,8 @@ peer_cfg_t *peer_cfg_create(char *name,
 			.get_ref = _get_ref,
 			.destroy = _destroy,
 			.set_wod_options = _set_wod_options,
+			.enable_certreq_critical_bit =_enable_certreq_critical_bit,
+			.get_certreq_critical =_get_certreq_critical,
 			.get_imei = _get_imei,
 			.get_vif = _get_vif,
 			.get_cust_cp_pcscf4 = _get_cust_cp_pcscf4,
@@ -989,6 +1050,7 @@ peer_cfg_t *peer_cfg_create(char *name,
 		.pull_mode = pull_mode,
 		.dpd = dpd,
 		.dpd_timeout = dpd_timeout,
+		.liveness_check_timeout = 0,
 		.vips = linked_list_create(),
 		.pcscfs = linked_list_create(),
 		.intsubnets = linked_list_create(),
@@ -1006,6 +1068,7 @@ peer_cfg_t *peer_cfg_create(char *name,
 		.retrans_tries = 0,
 		.retrans_base = 0,
 		.no_init_contact = FALSE,
+		.certreq_critical = FALSE,
 		.no_eap_only = FALSE,
 		.hashandurl = FALSE,
 		.ocsp = FALSE,

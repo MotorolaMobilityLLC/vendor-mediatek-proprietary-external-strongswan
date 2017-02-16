@@ -271,10 +271,12 @@ struct stroke_msg_t {
 			char *xauth_identity;
 			int mode;
 			int mobike;
+			int liveness_check;
 			int aggressive;
 			int pushmode;
 			int force_encap;
 			int fragmentation;
+			bool certreq_critical;
 			int ipcomp;
 			time_t inactivity;
 			int proxy_mode;

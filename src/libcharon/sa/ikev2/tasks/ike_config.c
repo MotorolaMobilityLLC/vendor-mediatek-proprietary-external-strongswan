@@ -123,6 +123,28 @@ static configuration_attribute_t *build_vip(host_t *vip)
 }
 
 /**
+ * build TIMEOUT_PERIOD_FOR_LIVENESS_CHECK attribute for CFG REQUEST
+ */
+static configuration_attribute_t *build_liveness_check(u_int32_t timeout_period)
+{
+	configuration_attribute_type_t type;
+	chunk_t chunk;
+
+	type = TIMEOUT_PERIOD_FOR_LIVENESS_CHECK;
+	if(!timeout_period)
+	{
+		chunk = chunk_empty;
+	}else
+	{
+		chunk = chunk_alloca(4);
+		*(u_int32_t *)(chunk.ptr) = timeout_period;
+	}
+
+	DBG1(DBG_IKE, "building TIMEOUT_PERIOD_FOR_LIVENESS_CHECK attribute %d,timeout_period: %u", type, timeout_period);
+	return configuration_attribute_create_chunk(CONFIGURATION_ATTRIBUTE, type, chunk);
+}
+
+/**
  * build PCSCF_IPV4/6_ADDRESS attribute from pcscf
  */
 static configuration_attribute_t *build_pcscf(host_t *pcscf, peer_cfg_t *config)
@@ -412,6 +434,28 @@ static void process_attribute(private_ike_config_t *this,
 			}
 			break;
 		}
+            /* if enable liveness check fature, it will set the dpd tiemout value*/
+		case TIMEOUT_PERIOD_FOR_LIVENESS_CHECK:
+			DBG1(DBG_IKE,"TIMEOUT_PERIOD_FOR_LIVENESS_CHECK");
+			if(config->get_liveness_check(config))
+			{
+				chunk_t liveness_check_timeout;
+				u_int32_t liveness_timeout = 0;
+				liveness_check_timeout = ca->get_chunk(ca);
+				if(!liveness_check_timeout.len)
+				{
+					DBG1(DBG_IKE, "invalid TIMEOUT_PERIOD_FOR_LIVENESS_CHECK attribute in the CFG REPLY");
+				}else if(liveness_check_timeout.len == 4)
+				{
+					memcpy((u_char *)&liveness_timeout, liveness_check_timeout.ptr, liveness_check_timeout.len);
+					config->set_liveness_check_timeout(config, liveness_timeout);
+					config->set_dpd(config,liveness_timeout);
+				}else
+				{
+					DBG1(DBG_IKE,"TIMEOUT_PERIOD_FOR_LIVENESS_CHECK invalid len : %u",liveness_check_timeout.len);
+				}
+			}
+			break;
 		case INTERNAL_IP4_SERVER:
 		case INTERNAL_IP6_SERVER:
 			/* assume it's a Windows client if we see proprietary attributes */
@@ -612,6 +656,17 @@ METHOD(task_t, build_i, status_t,
 			enumerator->destroy(enumerator);
 		}
 		pcscfs->destroy(pcscfs);
+
+        /* Add liveness check attribute to configuration request*/
+		if(config->get_liveness_check(config))
+		{
+			DBG1(DBG_IKE, "enable liveness_check,will add liveness check attribute to CFG REQUEST");
+			if(!cp)
+			{
+				cp = cp_payload_create_type(CONFIGURATION, CFG_REQUEST);
+			}
+			cp->add_attribute(cp, build_liveness_check(0));
+		}
 
 		/* Add imei to cp request payload */
 		if (config->get_imei(config))

@@ -959,7 +959,7 @@ static void process_payloads(private_child_create_t *this, message_t *message)
 			if (this->config)
 			{
 				this->proposal = this->config->select_proposal(this->config, this->proposals, FALSE, private);
-				if (!this->proposal->has_dh_group(this->proposal, this->dh_group))
+				if (!this->proposal || !this->proposal->has_dh_group(this->proposal, this->dh_group))
 				{
 					DBG1(DBG_IKE, "========================== no proposal");
 					return;

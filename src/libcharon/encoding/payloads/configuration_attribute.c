@@ -166,6 +166,12 @@ METHOD(payload_t, verify, status_t,
 				failed = TRUE;
 			}
 			break;
+		case TIMEOUT_PERIOD_FOR_LIVENESS_CHECK:
+			if(this->length_or_value !=0 && this->length_or_value !=4)
+			{
+				failed = TRUE;
+			}
+			break;
 		case SUPPORTED_ATTRIBUTES:
 			if (this->length_or_value % 2)
 			{

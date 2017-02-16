@@ -227,6 +227,8 @@ static void stroke_add_conn(private_stroke_socket_t *this, stroke_msg_t *msg)
 	DBG2(DBG_CFG, "  me_peerid=%s", msg->add_conn.ikeme.peerid);
 	DBG2(DBG_CFG, "  iface=%s", msg->add_conn.iface);
 	DBG2(DBG_CFG, "  keyexchange=ikev%u", msg->add_conn.version);
+	DBG2(DBG_CFG, "  liveness_check = %d", msg->add_conn.liveness_check);
+	DBG2(DBG_CFG, "  enable certreq payload critical bit  = %s", msg->add_conn.certreq_critical?"yes" : "no");
 
 	this->config->add(this->config, msg);
 	this->attribute->add_dns(this->attribute, msg);
