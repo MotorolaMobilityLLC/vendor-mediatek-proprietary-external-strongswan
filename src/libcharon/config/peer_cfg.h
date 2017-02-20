@@ -241,6 +241,44 @@ struct peer_cfg_t {
 	bool (*use_mobike) (peer_cfg_t *this);
 
 	/**
+	 * Use liveness_check (3GPP 24.302 ) if peer supports it?
+	 *
+	 * @return			TRUE to enable liveness_check support
+	 */
+	bool (*get_liveness_check) (peer_cfg_t *this);
+
+	/**
+	*  set CERTREQ payload critical bit
+	*@return        TRUE to enable critical bit
+	*/
+	bool (*get_certreq_critical) (peer_cfg_t *this);
+		
+	/**
+	 * Get liveness_check (3GPP 24.302 )timeout value
+	 *
+	 * @return			 liveness_check timeout value
+	 */
+	u_int32_t (*get_liveness_check_timeout) (peer_cfg_t *this);
+
+	/**
+	 * set  liveness_check (3GPP 24.302 ) cfg
+	 *
+	 */
+	void (*set_liveness_check) (peer_cfg_t *this, bool liveness_check);
+
+	/**
+	 * set  liveness_check timeout value
+	 *
+	 */
+	void (*set_liveness_check_timeout) (peer_cfg_t *this, u_int32_t liveness_check_timeout);
+
+	/**
+	 * enable CERTREQ request  payload critical bit
+	 */
+	void (*enable_certreq_critical_bit)(peer_cfg_t *this);
+
+
+	/**
 	 * Use/Accept aggressive mode with IKEv1?.
 	 *
 	 * @return			TRUE to use aggressive mode
@@ -260,6 +298,13 @@ struct peer_cfg_t {
 	 * @return			dpd_delay in seconds
 	 */
 	u_int32_t (*get_dpd) (peer_cfg_t *this);
+
+	/**
+	 * set  dpd timeout value
+	 *
+	 * 
+	 */
+	void (*set_dpd) (peer_cfg_t *this, u_int32_t dpd_timeout);
 
 	/**
 	 * Get the DPD timeout interval (IKEv1 only)

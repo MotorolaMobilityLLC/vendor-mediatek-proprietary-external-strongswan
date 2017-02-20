@@ -1195,7 +1195,8 @@ METHOD(ike_sa_manager_t, checkout_by_message, ike_sa_t*,
 
 	DBG2(DBG_MGR, "checkout IKE_SA by message");
 
-	if (id->get_responder_spi(id) == 0)
+	if (id->get_responder_spi(id) == 0 &&
+		message->get_message_id(message) == 0)
 	{
 		if (message->get_major_version(message) == IKEV2_MAJOR_VERSION)
 		{
@@ -1298,7 +1299,9 @@ METHOD(ike_sa_manager_t, checkout_by_message, ike_sa_t*,
 	if (get_entry_by_id(this, id, &entry, &segment) == SUCCESS)
 	{
 		/* only check out if we are not already processing it. */
-		if (entry->processing == get_message_id_or_hash(message))
+		if (entry->processing == get_message_id_or_hash(message) &&
+			message->get_first_payload_type(message) != FRAGMENT_V1 &&
+			message->get_first_payload_type(message) != PLV2_FRAGMENT)
 		{
 			DBG1(DBG_MGR, "ignoring request with ID %u, already processing",
 				 entry->processing);
@@ -1309,8 +1312,9 @@ METHOD(ike_sa_manager_t, checkout_by_message, ike_sa_t*,
 
 			ike_id = entry->ike_sa->get_id(entry->ike_sa);
 			entry->checked_out = TRUE;
-			if (message->get_first_payload_type(message) != FRAGMENT_V1)
-			{
+			if (message->get_first_payload_type(message) != FRAGMENT_V1 &&
+				message->get_first_payload_type(message) != PLV2_FRAGMENT)
+			{	/* TODO-FRAG: this fails if there are unencrypted payloads */
 				entry->processing = get_message_id_or_hash(message);
 			}
 			if (ike_id->get_responder_spi(ike_id) == 0)

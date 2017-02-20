@@ -17,7 +17,7 @@
 
 #include "attributes.h"
 
-ENUM_BEGIN(configuration_attribute_type_names, INTERNAL_IP4_ADDRESS, P_CSCF_IP6_ADDRESS,
+ENUM_BEGIN(configuration_attribute_type_names, INTERNAL_IP4_ADDRESS, TIMEOUT_PERIOD_FOR_LIVENESS_CHECK,
 	"INTERNAL_IP4_ADDRESS",
 	"INTERNAL_IP4_NETMASK",
 	"INTERNAL_IP4_DNS",
@@ -38,8 +38,9 @@ ENUM_BEGIN(configuration_attribute_type_names, INTERNAL_IP4_ADDRESS, P_CSCF_IP6_
 	"INTERNAL_IP6_PREFIX",
 	"HOME_AGENT_ADDRESS",
 	"P_CSCF_IP4_ADDRESS",
-	"P_CSCF_IP6_ADDRESS");
-ENUM_NEXT(configuration_attribute_type_names, XAUTH_TYPE, XAUTH_ANSWER, P_CSCF_IP6_ADDRESS,
+	"P_CSCF_IP6_ADDRESS",
+	"TIMEOUT_PERIOD_FOR_LIVENESS_CHECK");
+ENUM_NEXT(configuration_attribute_type_names, XAUTH_TYPE, XAUTH_ANSWER, TIMEOUT_PERIOD_FOR_LIVENESS_CHECK,
 	"XAUTH_TYPE",
 	"XAUTH_USER_NAME",
 	"XAUTH_USER_PASSWORD",
@@ -67,7 +68,7 @@ ENUM_NEXT(configuration_attribute_type_names, UNITY_BANNER, UNITY_DDNS_HOSTNAME,
 	"UNITY_DDNS_HOSTNAME");
 ENUM_END(configuration_attribute_type_names, UNITY_DDNS_HOSTNAME);
 
-ENUM_BEGIN(configuration_attribute_type_short_names, INTERNAL_IP4_ADDRESS,  P_CSCF_IP6_ADDRESS,
+ENUM_BEGIN(configuration_attribute_type_short_names, INTERNAL_IP4_ADDRESS,  TIMEOUT_PERIOD_FOR_LIVENESS_CHECK,
 	"ADDR",
 	"MASK",
 	"DNS",
@@ -88,8 +89,9 @@ ENUM_BEGIN(configuration_attribute_type_short_names, INTERNAL_IP4_ADDRESS,  P_CS
 	"PFX6",
 	"HOA",
 	"PCSCF",
-	"PCSCF6");
-ENUM_NEXT(configuration_attribute_type_short_names, XAUTH_TYPE, XAUTH_ANSWER, P_CSCF_IP6_ADDRESS,
+	"PCSCF6"
+	"LIVENESS_CHECK");
+ENUM_NEXT(configuration_attribute_type_short_names, XAUTH_TYPE, XAUTH_ANSWER, TIMEOUT_PERIOD_FOR_LIVENESS_CHECK,
 	"X_TYPE",
 	"X_USER",
 	"X_PWD",

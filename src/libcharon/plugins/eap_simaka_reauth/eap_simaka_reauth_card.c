@@ -249,11 +249,11 @@ METHOD(simaka_card_t, get_triplet, bool,
 
 	/* AT+EAUTH="F5427D46CC36495E4451E8950F641FF8" */
 	buf2hexstr(rand, SIM_RAND_LEN, rand_hexstr, sizeof(rand_hexstr));
-	snprintf(txbuf, MAX_BUF_LEN, "ipseceauth=%s,AT+EAUTH=\"%s\"", imsi, rand_hexstr);
+	snprintf(txbuf, MAX_BUF_LEN, "ipseceauth=%s,\"%s\"", imsi, rand_hexstr);
 
 	atcmd_txrx(txbuf, rxbuf, MAX_BUF_LEN, &rxlen);
 
-	if (strncmp(rxbuf, "+EAUTH:", 7) == 0)
+	if (strncmp(rxbuf, "ipseceauth:", strlen("ipseceauth")) == 0)
 	{
 		/* +EAUTH: 144, 0, "04884F7F0308963011BF1F04C0A9" */
 		/* got SW1 */
@@ -363,13 +363,13 @@ METHOD(simaka_card_t, get_quintuplet, status_t,
 	/* AT+EAUTH="F5427D46CC36495E4451E8950F641FF8","B11B447B41230000F42709D4CBD0FE99" */
 	buf2hexstr(rand, AKA_RAND_LEN, rand_hexstr, sizeof(rand_hexstr));
 	buf2hexstr(autn, AKA_AUTN_LEN, autn_hexstr, sizeof(autn_hexstr));
-	snprintf(txbuf, MAX_BUF_LEN, "ipseceauth=%s,AT+EAUTH=\"%s\",\"%s\"", imsi, rand_hexstr, autn_hexstr);
+	snprintf(txbuf, MAX_BUF_LEN, "ipseceauth=%s,\"%s\",\"%s\"", imsi, rand_hexstr, autn_hexstr);
 
 	atcmd_txrx(txbuf, rxbuf, MAX_BUF_LEN, &rxlen);
 
-	if (strncmp(rxbuf, "+EAUTH:", 7) == 0)
+	if (strncmp(rxbuf, "ipseceauth:", strlen("ipseceauth:")) == 0)
 	{
-		/* +EAUTH: 144, 0, "DB08E767CDCB6F28B2C810338F1E9225349166298D69D35C53A3EC1081AB62AF8D0632660D990451EB65C04508963011BF1F04C0A9" */
+		/* +eauth: 144, 0, "DB08E767CDCB6F28B2C810338F1E9225349166298D69D35C53A3EC1081AB62AF8D0632660D990451EB65C04508963011BF1F04C0A9" */
 		/* got SW1 */
 		ptr = rxbuf + 7;
 		ptrE = strchr(ptr, ',');

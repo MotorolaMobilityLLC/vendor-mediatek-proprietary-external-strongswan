@@ -51,6 +51,7 @@ enum configuration_attribute_type_t {
 	HOME_AGENT_ADDRESS      = 19,
 	P_CSCF_IP4_ADDRESS      = 20,
 	P_CSCF_IP6_ADDRESS      = 21,
+	TIMEOUT_PERIOD_FOR_LIVENESS_CHECK =24,
 	/* XAUTH attributes */
 	XAUTH_TYPE              = 16520,
 	XAUTH_USER_NAME         = 16521,

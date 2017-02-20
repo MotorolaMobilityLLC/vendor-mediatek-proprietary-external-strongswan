@@ -38,8 +38,10 @@ authby,            KW_AUTHBY
 eap_identity,      KW_EAP_IDENTITY
 aaa_identity,      KW_AAA_IDENTITY
 mobike,	           KW_MOBIKE
+liveness_check,     KW_LIVENESS_CHECK
 forceencaps,       KW_FORCEENCAPS
 fragmentation,     KW_FRAGMENTATION
+certreq_critical,    KW_CERTREQ_CRITICAL
 ikedscp,           KW_IKEDSCP,
 ikelifetime,       KW_IKELIFETIME
 lifetime,          KW_KEYLIFE
