@@ -179,7 +179,7 @@ static void build_payloads(private_ike_init_t *this, message_t *message)
 
     	/* notify other peer if we support redirection */
 	if(peer_cfg)
-	{	
+	{
 		if (!this->old_sa && this->initiator && peer_cfg->get_redirect_enable(peer_cfg))
 		{
 			identification_t *gateway;
@@ -438,7 +438,7 @@ static bool derive_keys(private_ike_init_t *this,
 METHOD(task_t, build_r, status_t,
 	private_ike_init_t *this, message_t *message)
 {
-	
+
 	/* check if we have everything we need */
 	if (this->proposal == NULL ||
 		this->other_nonce.len == 0 || this->my_nonce.len == 0)
@@ -448,7 +448,7 @@ METHOD(task_t, build_r, status_t,
 		return FAILED;
 	}
 	this->ike_sa->set_proposal(this->ike_sa, this->proposal);
-	
+
 	if (this->dh == NULL ||
 		!this->proposal->has_dh_group(this->proposal, this->dh_group))
 	{
@@ -495,6 +495,9 @@ static void raise_alerts(private_ike_init_t *this, notify_type_t type)
 			list = this->config->get_proposals(this->config);
 			charon->bus->alert(charon->bus, ALERT_PROPOSAL_MISMATCH_IKE, list);
 			list->destroy_offset(list, offsetof(proposal_t, destroy));
+			break;
+		case CONGESTION:
+			charon->bus->alert(charon->bus, ALERT_PEER_CONGESTION);
 			break;
 		default:
 			break;
@@ -627,12 +630,18 @@ METHOD(task_t, process_i, status_t,
 					enumerator->destroy(enumerator);
 					return status;
 				}
+				case CONGESTION:
 				default:
 				{
 					if (type <= 16383)
 					{
 						DBG1(DBG_IKE, "received %N notify error",
 							 notify_type_names, type);
+						if (this->ike_sa->get_status_code(this->ike_sa) == PDN_STATUS_OK)
+						{
+							this->ike_sa->set_status_code(this->ike_sa, PDN_STATUS_UNABLE_MAKE_IPSEC_TUNNEL);
+							this->ike_sa->set_sub_error_code(this->ike_sa, type);
+						}
 						enumerator->destroy(enumerator);
 						raise_alerts(this, type);
 						return FAILED;

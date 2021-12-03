@@ -86,6 +86,7 @@ enum notify_type_t {
 	MS_NOTIFY_STATUS = 12345,
 
 	/* notify status messages */
+	CONGESTION = 15500,
 	INITIAL_CONTACT = 16384,
 	SET_WINDOW_SIZE = 16385,
 	ADDITIONAL_TS_POSSIBLE = 16386,

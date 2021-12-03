@@ -98,6 +98,8 @@ enum alert_t {
 	ALERT_PEER_ADDR_FAILED,
 	/** peer did not respond to initial message, current try (int, 0-based) */
 	ALERT_PEER_INIT_UNREACHABLE,
+	/** peer congestion in IKE_SA_INIT response */
+	ALERT_PEER_CONGESTION,
 	/** received IKE message with invalid SPI, argument is message_t* */
 	ALERT_INVALID_IKE_SPI,
 	/** received IKE message with invalid header, argument is message_t* */
@@ -425,7 +427,7 @@ struct bus_t {
 	 * @param initiated	TRUE if initiated successfully, FALSE otherwise
 	 */
 	void (*ike_reestablish_post)(bus_t *this, ike_sa_t *old, ike_sa_t *new,
-								 bool initiated);	
+								 bool initiated);
 
 	/**
 	 * CHILD_SA update hook.

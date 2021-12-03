@@ -190,10 +190,10 @@ static void send_ike_delete_informational(private_ike_natd_t *this,
     message_t *message;
     packet_t *packet;
     host_t *host;
- 
+
     delete_payload_t *delete_payload;
     delete_payload = delete_payload_create(DELETE, PROTO_IKE);
- 
+
     message = message_create(IKEV2_MAJOR_VERSION, IKEV2_MINOR_VERSION);
     message->set_message_id(message, reply->get_message_id(reply) + 1);
     host = this->ike_sa->get_my_host(this->ike_sa);
@@ -202,7 +202,7 @@ static void send_ike_delete_informational(private_ike_natd_t *this,
     message->set_destination(message, host->clone(host));
     message->set_exchange_type(message, INFORMATIONAL);
     message->add_payload(message, (payload_t*)delete_payload);
- 
+
     if (this->ike_sa->generate_message(this->ike_sa, message,
                                        &packet) == SUCCESS)
     {
@@ -246,6 +246,9 @@ static void process_payloads(private_ike_natd_t *this, message_t *message)
 		{
 			case NAT_DETECTION_DESTINATION_IP:
 			{
+				DBG1(DBG_IKE, "received %N",
+					notify_type_names, notify->get_notify_type(notify));
+
 				this->dst_seen = TRUE;
 				hash = notify->get_notification_data(notify);
 				if (!this->dst_matched)
@@ -269,6 +272,9 @@ static void process_payloads(private_ike_natd_t *this, message_t *message)
 			}
 			case NAT_DETECTION_SOURCE_IP:
 			{
+				DBG1(DBG_IKE, "received %N",
+					notify_type_names, notify->get_notify_type(notify));
+
 				this->src_seen = TRUE;
 				if (!this->src_matched)
 				{
